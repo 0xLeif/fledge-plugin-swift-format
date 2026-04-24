@@ -1,0 +1,15 @@
+[plugin]
+name = "fledge-plugin-swift-format"
+version = "0.1.0"
+description = "Format and lint Swift code with CorvidLabs style"
+author = "0xLeif"
+protocol = "fledge-v1"
+
+[capabilities]
+exec = true
+metadata = true
+
+[[commands]]
+name = "swift-format"
+description = "Format and lint Swift files with CorvidLabs style"
+binary = "fledge-plugin-swift-format"

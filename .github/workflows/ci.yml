@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install swift-format
+        run: brew install swift-format
+
+      - name: Build
+        run: swift build -c release
+
+      - name: Test
+        run: swift test
+
+      - name: Self-lint
+        run: swift-format lint --strict -r --configuration .swift-format.json Sources Tests
+
+      - name: Check spec-sync
+        run: |
+          curl -sL https://github.com/CorvidLabs/spec-sync/releases/latest/download/specsync-macos-aarch64.tar.gz | tar xz
+          ./specsync-macos-aarch64 check --strict

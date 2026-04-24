@@ -1,0 +1,6 @@
+[registry]
+name = "fledge-plugin-swift-format"
+
+[specs]
+format = "specs/format/format.spec.md"
+lint = "specs/lint/lint.spec.md"

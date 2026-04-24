@@ -1,0 +1,5 @@
+[tasks]
+build = "swift build -c release"
+test = "swift test"
+lint = "swift-format lint --strict -r --configuration .swift-format.json Sources Tests"
+fmt = "swift-format format -i -r -p --configuration .swift-format.json Sources Tests"
