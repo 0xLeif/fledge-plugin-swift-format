@@ -23,7 +23,11 @@ public struct Plugin {
     public func run() async throws {
         if isProtocolMode() {
             let handler = ProtocolHandler(plugin: self)
-            try await handler.run()
+            do {
+                try await handler.run()
+            } catch ProtocolError.missingInitMessage {
+                try await runStandalone()
+            }
         } else {
             try await runStandalone()
         }
@@ -73,22 +77,7 @@ public struct Plugin {
         guard CommandLine.arguments.count <= 1 else {
             return false
         }
-
-        guard isatty(STDIN_FILENO) == 0 else {
-            return false
-        }
-
-        var bytesAvailable: Int32 = 0
-        #if os(Linux)
-            let fionread: UInt = 0x541B
-        #else
-            let fionread: UInt = 0x4004_667F
-        #endif
-        guard ioctl(STDIN_FILENO, fionread, &bytesAvailable) == 0 else {
-            return false
-        }
-
-        return bytesAvailable > 0
+        return isatty(STDIN_FILENO) == 0
     }
 
     private func parseArguments(_ arguments: [String]) throws -> Command {

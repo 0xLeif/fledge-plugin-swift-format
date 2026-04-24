@@ -89,14 +89,15 @@ public struct ProtocolHandler {
     // MARK: - Private Methods
 
     private func readInitMessage() throws -> InitMessage {
-        guard let data = inputHandle.availableData as Data?,
+        let data = inputHandle.availableData
+        guard
             !data.isEmpty,
             let line = String(data: data, encoding: .utf8)?.trimmingCharacters(
                 in: .whitespacesAndNewlines
             ),
             !line.isEmpty
         else {
-            throw PluginError.invalidArgument("Missing init message from fledge")
+            throw ProtocolError.missingInitMessage
         }
 
         let decoder = JSONDecoder()
@@ -136,6 +137,13 @@ public struct ProtocolHandler {
             outputHandle.write(data)
         }
     }
+}
+
+// MARK: - Protocol Errors
+
+/// Errors specific to the Fledge protocol handler.
+public enum ProtocolError: Error {
+    case missingInitMessage
 }
 
 // MARK: - Protocol Types
