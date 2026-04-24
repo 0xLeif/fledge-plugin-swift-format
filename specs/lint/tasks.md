@@ -9,7 +9,7 @@ spec: lint.spec.md
 - [x] Write unit tests for LintCommand
 - [x] Implement --check alias for --lint --strict
 - [ ] Add integration test with real swift-format binary
-- [ ] Verify Fledge protocol mode works end-to-end
+- [x] Verify Fledge protocol mode works end-to-end
 
 ## Gaps
 
