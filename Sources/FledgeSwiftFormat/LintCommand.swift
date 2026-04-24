@@ -42,11 +42,15 @@ public struct LintCommand {
         }
 
         if !strict && !result.stdout.isEmpty {
-            print(result.stdout)
+            if let data = (result.stdout + "\n").data(using: .utf8) {
+                FileHandle.standardError.write(data)
+            }
         }
 
         if !result.stderr.isEmpty {
-            print(result.stderr)
+            if let data = (result.stderr + "\n").data(using: .utf8) {
+                FileHandle.standardError.write(data)
+            }
         }
     }
 }
