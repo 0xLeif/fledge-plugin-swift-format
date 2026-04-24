@@ -15,4 +15,4 @@ build = "swift build -c release"
 [[commands]]
 name = "swift-format"
 description = "Format and lint Swift files with CorvidLabs style"
-binary = "fledge-plugin-swift-format"
+binary = ".build/release/fledge-plugin-swift-format"
