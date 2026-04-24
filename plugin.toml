@@ -9,6 +9,9 @@ protocol = "fledge-v1"
 exec = true
 metadata = true
 
+[hooks]
+build = "swift build -c release"
+
 [[commands]]
 name = "swift-format"
 description = "Format and lint Swift files with CorvidLabs style"
