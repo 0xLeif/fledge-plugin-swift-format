@@ -107,7 +107,7 @@ public struct ProtocolHandler {
 
     private func parseProtocolArguments(_ args: [String]) throws -> Command {
         let mode: CommandMode =
-            args.contains("--lint") || args.contains("lint")
+            args.contains("--lint") || args.contains("lint") || args.contains("--check")
             ? .lint
             : .format
         let strict = args.contains("--strict") || args.contains("--check")
