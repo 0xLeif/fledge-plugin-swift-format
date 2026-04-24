@@ -10,7 +10,7 @@ spec: format.spec.md
 - [x] Implement file discovery logic
 - [x] Embed bundled .swift-format.json as resource
 - [ ] Add integration test with real swift-format binary
-- [ ] Verify Fledge protocol mode works end-to-end
+- [x] Verify Fledge protocol mode works end-to-end
 
 ## Gaps
 
