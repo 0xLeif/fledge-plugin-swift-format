@@ -650,4 +650,86 @@ internal struct BundledConfigFormatTests {
             """
         try await assertFormatted(input: input, equals: input)
     }
+
+    @Test("some/any existential types are preserved")
+    internal func opaqueAndExistentialPreserved() async throws {
+        let input = """
+            public protocol Shape {}
+            public struct Circle: Shape {}
+            public func makeShape() -> some Shape { Circle() }
+            public func acceptShape(_ shape: any Shape) {}
+            """
+        try await assertFormatted(input: input, equals: input)
+    }
+
+    @Test("@resultBuilder declarations are preserved")
+    internal func resultBuilderPreserved() async throws {
+        let input = """
+            @resultBuilder
+            public struct StringBuilder {
+                public static func buildBlock(_ parts: String...) -> String { parts.joined() }
+            }
+            public func makeText(@StringBuilder _ build: () -> String) -> String { build() }
+            """
+        try await assertFormatted(input: input, equals: input)
+    }
+
+    @Test("#available checks are preserved")
+    internal func availabilityCheckPreserved() async throws {
+        let input = """
+            public func newApi() {
+                if #available(iOS 16, *) {
+                    print("modern")
+                }
+            }
+            """
+        try await assertFormatted(input: input, equals: input)
+    }
+
+    // MARK: - Stress integration
+
+    @Test("Horrible-but-mechanically-fixable code is fully cleaned in one pass")
+    internal func horribleFileIsCompletelyFixed() async throws {
+        let input = """
+            import XCTest
+            import Foundation
+
+            public class Foo
+            {
+            \tpublic let value : Int
+              public let pairs : [String : Int] = [:]
+              public func doStuff(  x:Int  ,y:Int)  {
+                if (x>0){
+                  print("positive");print(y);
+                }
+                var a = 1, b = 2
+                let _ = a; let _ = b
+              }
+
+              public init(value : Int){self.value=value}
+            }
+            """
+        let expected = """
+            import Foundation
+            import XCTest
+
+            public class Foo {
+                public let value: Int
+                public let pairs: [String: Int] = [:]
+                public func doStuff(x: Int, y: Int) {
+                    if x > 0 {
+                        print("positive")
+                        print(y)
+                    }
+                    var a = 1
+                    var b = 2
+                    let _ = a
+                    let _ = b
+                }
+
+                public init(value: Int) { self.value = value }
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
 }
