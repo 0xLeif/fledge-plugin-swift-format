@@ -1,6 +1,6 @@
 [plugin]
 name = "fledge-plugin-swift-format"
-version = "0.1.0"
+version = "0.2.0"
 description = "Format and lint Swift code with CorvidLabs style"
 author = "0xLeif"
 protocol = "fledge-v1"
