@@ -204,6 +204,230 @@ internal struct BundledConfigLintTests {
         try await assertLintFinding(input: input, contains: "DoNotUseSemicolons")
     }
 
+    // MARK: - Iteration / collection patterns
+
+    @Test("forEach is reported in favor of for-in")
+    internal func forEachReported() async throws {
+        let input = """
+            public func go(_ items: [Int]) {
+                items.forEach { item in
+                    print(item)
+                }
+            }
+            """
+        try await assertLintFinding(input: input, contains: "ReplaceForEachWithForLoop")
+    }
+
+    // MARK: - Numeric literals
+
+    @Test("Decimal literals over 999 are reported for missing _ separator")
+    internal func decimalLiteralGroupingReported() async throws {
+        let input = """
+            public let big = 1000000
+            """
+        try await assertLintFinding(input: input, contains: "GroupNumericLiterals")
+    }
+
+    @Test("Hex literals over 4 digits are reported for missing _ separator")
+    internal func hexLiteralGroupingReported() async throws {
+        let input = """
+            public let mask = 0xFFFFFFFF
+            """
+        try await assertLintFinding(input: input, contains: "GroupNumericLiterals")
+    }
+
+    // MARK: - Properties / initializers
+
+    @Test("Manual single-key get { } in computed property is reported")
+    internal func manualGetterIsReported() async throws {
+        let input = """
+            public struct Foo {
+                public var x: Int {
+                    get {
+                        return 42
+                    }
+                }
+            }
+            """
+        try await assertLintFinding(input: input, contains: "UseSingleLinePropertyGetter")
+    }
+
+    @Test("Static property names that repeat the type are reported")
+    internal func dontRepeatTypeInStaticPropertyReported() async throws {
+        let input = """
+            public struct Color {
+                public static let redColor = Color()
+                public static let blueColor = Color()
+            }
+            """
+        try await assertLintFinding(input: input, contains: "DontRepeatTypeInStaticProperties")
+    }
+
+    @Test("Manual init that matches synthesized memberwise init is reported")
+    internal func synthesizedInitReported() async throws {
+        let input = """
+            internal struct Point {
+                internal let x: Int
+                internal let y: Int
+
+                internal init(x: Int, y: Int) {
+                    self.x = x
+                    self.y = y
+                }
+            }
+            """
+        try await assertLintFinding(input: input, contains: "UseSynthesizedInitializer")
+    }
+
+    // MARK: - Pattern matching
+
+    @Test("Mixing 'case let' and 'case ... let' patterns is reported")
+    internal func letInEveryBoundCaseReported() async throws {
+        let input = """
+            public func go(_ x: Result<Int, Error>) {
+                switch x {
+                case .success(let value):
+                    print(value)
+                case let .failure(error):
+                    print(error)
+                }
+            }
+            """
+        try await assertLintFinding(input: input, contains: "UseLetInEveryBoundCaseVariable")
+    }
+
+    @Test("Optional binding that discards the value is reported")
+    internal func explicitNilCheckReported() async throws {
+        let input = """
+            public func go(_ x: Int?) {
+                if let _ = x {
+                    print("set")
+                }
+            }
+            """
+        try await assertLintFinding(input: input, contains: "UseExplicitNilCheckInConditions")
+    }
+
+    // MARK: - Type signatures
+
+    @Test("Empty tuple in return position is reported")
+    internal func emptyTupleReturnReported() async throws {
+        let input = """
+            public typealias Handler = () -> ()
+            """
+        try await assertLintFinding(input: input, contains: "ReturnVoidInsteadOfEmptyTuple")
+    }
+
+    // MARK: - Enums
+
+    @Test("Enum where every case is indirect is reported")
+    internal func fullyIndirectEnumReported() async throws {
+        let input = """
+            public enum Tree {
+                indirect case node(Int, Tree, Tree)
+                indirect case leaf(Int)
+            }
+            """
+        try await assertLintFinding(input: input, contains: "FullyIndirectEnum")
+    }
+
+    @Test("Enum cases with raw values on one line are reported")
+    internal func oneCasePerLineReported() async throws {
+        let input = """
+            public enum Color: Int {
+                case red = 1, green = 2, blue = 3
+            }
+            """
+        try await assertLintFinding(input: input, contains: "OneCasePerLine")
+    }
+
+    // MARK: - Identifiers
+
+    @Test("Non-ASCII identifiers are reported")
+    internal func nonAsciiIdentifierReported() async throws {
+        let input = """
+            public let café = "coffee"
+            """
+        try await assertLintFinding(input: input, contains: "IdentifiersMustBeASCII")
+    }
+
+    // MARK: - Expressions
+
+    @Test("Assignment used as a sub-expression is reported")
+    internal func assignmentInExpressionReported() async throws {
+        let input = """
+            public func go() {
+                var x = 0
+                let y = (x = 5)
+                print(x, y)
+            }
+            """
+        try await assertLintFinding(input: input, contains: "NoAssignmentInExpressions")
+    }
+
+    // MARK: - Conformances
+
+    @Test("@retroactive conformance is reported")
+    internal func retroactiveConformanceReported() async throws {
+        let input = """
+            extension String: @retroactive Identifiable {
+                public var id: String { self }
+            }
+            """
+        try await assertLintFinding(input: input, contains: "AvoidRetroactiveConformances")
+    }
+
+    // MARK: - Negative cases for disabled rules
+
+    @Test("Leading underscore identifier does NOT trigger NoLeadingUnderscores")
+    internal func leadingUnderscoreAllowed() async throws {
+        let input = """
+            public struct Foo {
+                private let _internal: Int = 0
+            }
+            """
+        try await assertNoLintFinding(input: input, for: "NoLeadingUnderscores")
+    }
+
+    @Test("Explicit return does NOT trigger OmitExplicitReturns")
+    internal func explicitReturnNotReported() async throws {
+        let input = """
+            public func compute() -> Int {
+                return 42
+            }
+            public var x: Int { return 42 }
+            """
+        try await assertNoLintFinding(input: input, for: "OmitExplicitReturns")
+    }
+
+    @Test("if/else without early-exit conversion does NOT trigger UseEarlyExits")
+    internal func earlyExitsNotReported() async throws {
+        let input = """
+            public func go(_ x: Int) -> Int {
+                if x > 0 {
+                    return 1
+                } else {
+                    return 2
+                }
+            }
+            """
+        try await assertNoLintFinding(input: input, for: "UseEarlyExits")
+    }
+
+    @Test("for-in with conditional body does NOT trigger UseWhereClausesInForLoops")
+    internal func whereClauseNotReported() async throws {
+        let input = """
+            public func go(_ items: [Int]) {
+                for item in items {
+                    if item > 0 {
+                        print(item)
+                    }
+                }
+            }
+            """
+        try await assertNoLintFinding(input: input, for: "UseWhereClausesInForLoops")
+    }
+
     // MARK: - Negative cases
 
     @Test("Clean code produces no lint findings")

@@ -283,4 +283,239 @@ internal struct BundledConfigFormatTests {
             """
         try await assertFormatted(input: input, equals: input)
     }
+
+    // MARK: - Mixed / weird indentation
+
+    @Test("Mixed tab + 2-space + 4-space indent is normalized to 4-space")
+    internal func mixedIndentationNormalized() async throws {
+        let input = """
+            public struct Foo {
+            \tpublic let a: Int
+                public let b: Int
+              public let c: Int
+            }
+            """
+        let expected = """
+            public struct Foo {
+                public let a: Int
+                public let b: Int
+                public let c: Int
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Trailing whitespace on a line is removed")
+    internal func trailingWhitespaceRemoved() async throws {
+        let input = "public let x = 1   \npublic let y = 2"
+        let expected = "public let x = 1\npublic let y = 2"
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    // MARK: - Switch / conditional compilation
+
+    @Test("Switch case labels are not extra-indented")
+    internal func switchCaseLabelsAlignWithSwitch() async throws {
+        let input = """
+            public func go(_ x: Int) {
+                switch x {
+                    case 1:
+                        print("one")
+                    default:
+                        print("other")
+                }
+            }
+            """
+        let expected = """
+            public func go(_ x: Int) {
+                switch x {
+                case 1:
+                    print("one")
+                default:
+                    print("other")
+                }
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Conditional compilation block bodies are indented")
+    internal func conditionalCompilationBodiesIndented() async throws {
+        let input = """
+            public func go() {
+            #if os(macOS)
+            print("mac")
+            #else
+            print("other")
+            #endif
+            }
+            """
+        let expected = """
+            public func go() {
+                #if os(macOS)
+                    print("mac")
+                #else
+                    print("other")
+                #endif
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    // MARK: - Operators / spacing
+
+    @Test("Spaces around range operators are removed")
+    internal func rangeOperatorsHaveNoSpaces() async throws {
+        let input = """
+            public let r = 1 ... 10
+            public let half = 1 ..< 10
+            """
+        let expected = """
+            public let r = 1...10
+            public let half = 1..<10
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("End-of-line comments get exactly two spaces of separation")
+    internal func endOfLineCommentSpacingNormalized() async throws {
+        let input = """
+            public let x = 1 // one space
+            public let y = 2  // two spaces
+            public let z = 3// no space
+            """
+        let expected = """
+            public let x = 1  // one space
+            public let y = 2  // two spaces
+            public let z = 3  // no space
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    // MARK: - Property accessors
+
+    @Test("Single-line property getter strips the get { } wrapper")
+    internal func singleLinePropertyGetterStrippedFromBlock() async throws {
+        let input = """
+            public struct Foo {
+                public var x: Int {
+                    get {
+                        return 42
+                    }
+                }
+            }
+            """
+        let expected = """
+            public struct Foo {
+                public var x: Int {
+                    return 42
+                }
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    // MARK: - Enum case layout
+
+    @Test("Enum cases with raw values split onto their own lines")
+    internal func enumCasesWithRawValuesSplit() async throws {
+        let input = """
+            public enum Color: Int {
+                case red = 1, green = 2, blue = 3
+            }
+            """
+        let expected = """
+            public enum Color: Int {
+                case red = 1
+                case green = 2
+                case blue = 3
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Enum cases with associated values split onto their own lines")
+    internal func enumCasesWithAssociatedValuesSplit() async throws {
+        let input = """
+            public enum Shape {
+                case circle(radius: Double), square(side: Double)
+            }
+            """
+        let expected = """
+            public enum Shape {
+                case circle(radius: Double)
+                case square(side: Double)
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Bare enum cases (no raw or associated values) stay on one line")
+    internal func bareEnumCasesStayOnOneLine() async throws {
+        let input = """
+            public enum Status {
+                case red, green, blue
+            }
+            """
+        try await assertFormatted(input: input, equals: input)
+    }
+
+    // MARK: - Generics & wrapping
+
+    @Test("Long generic function signature wraps args one-per-line")
+    internal func longGenericSignatureWraps() async throws {
+        let input = """
+            public func merge<LeftOutput, RightOutput, Output>(left: LeftOutput, right: RightOutput, transform: (LeftOutput, RightOutput) -> Output) -> Output where LeftOutput: Sendable, RightOutput: Sendable, Output: Sendable {
+                transform(left, right)
+            }
+            """
+        let expected = """
+            public func merge<LeftOutput, RightOutput, Output>(
+                left: LeftOutput,
+                right: RightOutput,
+                transform: (LeftOutput, RightOutput) -> Output
+            ) -> Output where LeftOutput: Sendable, RightOutput: Sendable, Output: Sendable {
+                transform(left, right)
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    // MARK: - Multi-line strings
+
+    @Test("Multi-line string literals are preserved verbatim")
+    internal func multiLineStringLiteralPreserved() async throws {
+        let input = """
+            public let banner = \"\"\"
+                line one
+                line two with extra        spacing
+                line three
+                \"\"\"
+            """
+        try await assertFormatted(input: input, equals: input)
+    }
+
+    // MARK: - Disabled rules — explicit returns must be left intact
+
+    @Test("Explicit return is preserved (OmitExplicitReturns disabled)")
+    internal func explicitReturnPreserved() async throws {
+        let input = """
+            public func compute() -> Int {
+                return 42
+            }
+            """
+        try await assertFormatted(input: input, equals: input)
+    }
+
+    @Test("Explicit return in computed property body is preserved")
+    internal func explicitReturnInComputedPropertyPreserved() async throws {
+        let input = """
+            public struct Foo {
+                public var x: Int {
+                    return 42
+                }
+            }
+            """
+        try await assertFormatted(input: input, equals: input)
+    }
 }
