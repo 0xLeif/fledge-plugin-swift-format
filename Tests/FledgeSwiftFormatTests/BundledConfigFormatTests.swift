@@ -518,4 +518,136 @@ internal struct BundledConfigFormatTests {
             """
         try await assertFormatted(input: input, equals: input)
     }
+
+    // MARK: - Token spacing
+
+    @Test("Binary operators get one space on each side")
+    internal func binaryOperatorSpacingNormalized() async throws {
+        let input = """
+            public let a = 1+2
+            public let b = 1   +   2
+            public let c = a*2-1
+            """
+        let expected = """
+            public let a = 1 + 2
+            public let b = 1 + 2
+            public let c = a * 2 - 1
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Colons get no space before and one space after")
+    internal func colonSpacingNormalized() async throws {
+        let input = """
+            public struct Foo {
+                public let value : Int
+                public let dict : [String : Int]
+            }
+            """
+        let expected = """
+            public struct Foo {
+                public let value: Int
+                public let dict: [String: Int]
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Commas get no space before and one space after")
+    internal func commaSpacingNormalized() async throws {
+        let input = """
+            public func go(x:Int,y:Int,z:Int){print(x,y,z)}
+            """
+        let expected = """
+            public func go(x: Int, y: Int, z: Int) { print(x, y, z) }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Excess whitespace inside parentheses is collapsed")
+    internal func parenInteriorWhitespaceCollapsed() async throws {
+        let input = """
+            public func go(  x: Int  ,  y: Int  )  {  print(x, y)  }
+            """
+        let expected = """
+            public func go(x: Int, y: Int) { print(x, y) }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    // MARK: - Closure call sites
+
+    @Test("Trailing closure call site is normalized for spacing and arguments")
+    internal func trailingClosureCallSiteNormalized() async throws {
+        let input = """
+            public let doubled = [1,2,3].map{$0*2}
+            """
+        let expected = """
+            public let doubled = [1, 2, 3].map { $0 * 2 }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Closure with capture list is preserved")
+    internal func closureWithCaptureListPreserved() async throws {
+        let input = """
+            public class Foo {
+                public func go() {
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self else { return }
+                        self.doStuff()
+                    }
+                }
+                public func doStuff() {}
+            }
+            """
+        try await assertFormatted(input: input, equals: input)
+    }
+
+    // MARK: - Modern Swift syntax
+
+    @Test("async let is preserved")
+    internal func asyncLetPreserved() async throws {
+        let input = """
+            public func merge() async throws -> (Int, String) {
+                async let a = fetchInt()
+                async let b = fetchString()
+                return try await (a, b)
+            }
+            public func fetchInt() async -> Int { 1 }
+            public func fetchString() async -> String { "" }
+            """
+        try await assertFormatted(input: input, equals: input)
+    }
+
+    @Test("willSet/didSet observers are preserved")
+    internal func propertyObserversPreserved() async throws {
+        let input = """
+            public class Bar {
+                public var x: Int = 0 {
+                    willSet {
+                        print("will", newValue)
+                    }
+                    didSet {
+                        print("did", oldValue)
+                    }
+                }
+            }
+            """
+        try await assertFormatted(input: input, equals: input)
+    }
+
+    @Test("Property wrapper attributes are preserved")
+    internal func propertyWrappersPreserved() async throws {
+        let input = """
+            @MainActor
+            public final class Foo {
+                @Published public var x: Int = 0
+                @MainActor public func bar() {
+                    print(x)
+                }
+            }
+            """
+        try await assertFormatted(input: input, equals: input)
+    }
 }

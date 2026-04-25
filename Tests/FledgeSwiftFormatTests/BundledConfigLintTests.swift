@@ -30,6 +30,39 @@ internal struct BundledConfigLintTests {
         try await assertLintFinding(input: input, contains: "NeverUseForceTry")
     }
 
+    @Test("Force cast (as!) is reported")
+    internal func forceCastReported() async throws {
+        let input = """
+            public func bad(_ x: Any) -> Int {
+                let v = x as! Int
+                return v
+            }
+            """
+        try await assertLintFinding(input: input, contains: "NeverForceUnwrap")
+    }
+
+    @Test("try? does NOT trigger NeverUseForceTry")
+    internal func optionalTryAllowed() async throws {
+        let input = """
+            public func go() throws -> Int { 1 }
+            public func use() {
+                let x = try? go()
+                print(x as Any)
+            }
+            """
+        try await assertNoLintFinding(input: input, for: "NeverUseForceTry")
+    }
+
+    @Test("Optional cast (as?) does NOT trigger NeverForceUnwrap")
+    internal func optionalCastAllowed() async throws {
+        let input = """
+            public func go(_ x: Any) -> Int? {
+                x as? Int
+            }
+            """
+        try await assertNoLintFinding(input: input, for: "NeverForceUnwrap")
+    }
+
     @Test("Implicitly unwrapped optional is reported")
     internal func implicitlyUnwrappedReported() async throws {
         let input = """
