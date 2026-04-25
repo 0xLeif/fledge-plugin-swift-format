@@ -686,6 +686,105 @@ internal struct BundledConfigFormatTests {
         try await assertFormatted(input: input, equals: input)
     }
 
+    // MARK: - Whole-decl-on-one-line explosion
+
+    @Test("Entire struct crammed onto one line is exploded onto multiple lines")
+    internal func structOnOneLineExplodes() async throws {
+        let input = """
+            public struct Foo { public let value: Int; public func bar() -> Int { value } }
+            """
+        let expected = """
+            public struct Foo {
+                public let value: Int
+                public func bar() -> Int { value }
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Multiple top-level declarations joined by ; split onto separate lines")
+    internal func semicolonJoinedTopLevelDeclsSplit() async throws {
+        let input = """
+            public func a() {}; public func b() {}; public func c() {}
+            """
+        let expected = """
+            public func a() {}
+            public func b() {}
+            public func c() {}
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Massive struct with init body all on one line is fully expanded")
+    internal func massiveStructOnOneLineExplodes() async throws {
+        let input = """
+            public struct User { public let name: String; public let age: Int; public let email: String; public init(name: String, age: Int, email: String) { self.name = name; self.age = age; self.email = email } }
+            """
+        let expected = """
+            public struct User {
+                public let name: String
+                public let age: Int
+                public let email: String
+                public init(name: String, age: Int, email: String) {
+                    self.name = name
+                    self.age = age
+                    self.email = email
+                }
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Long single-line function with body exceeding 120 chars wraps the body")
+    internal func longSingleLineFunctionWraps() async throws {
+        let input = """
+            public func greet(name: String, age: Int) -> String { return "Hello, " + name + " you are " + String(age) + " years old today!" }
+            """
+        let expected = """
+            public func greet(name: String, age: Int) -> String {
+                return "Hello, " + name + " you are " + String(age) + " years old today!"
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Enum with all cases joined by ; on one line splits each case onto its own line")
+    internal func enumWithSemicolonJoinedCasesSplits() async throws {
+        let input = """
+            public enum Day { case monday; case tuesday; case wednesday; case thursday; case friday; case saturday; case sunday }
+            """
+        let expected = """
+            public enum Day {
+                case monday
+                case tuesday
+                case wednesday
+                case thursday
+                case friday
+                case saturday
+                case sunday
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
+    @Test("Nested struct crammed on one line is fully exploded")
+    internal func nestedStructOnOneLineExplodes() async throws {
+        let input = """
+            public struct Outer { public struct Inner { public let x: Int; public let y: Int }; public let value: Inner; public func sum() -> Int { value.x + value.y } }
+            """
+        let expected = """
+            public struct Outer {
+                public struct Inner {
+                    public let x: Int
+                    public let y: Int
+                }
+                public let value: Inner
+                public func sum() -> Int { value.x + value.y }
+            }
+            """
+        try await assertFormatted(input: input, equals: expected)
+    }
+
     // MARK: - Stress integration
 
     @Test("Horrible-but-mechanically-fixable code is fully cleaned in one pass")
