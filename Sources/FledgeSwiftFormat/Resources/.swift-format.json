@@ -64,7 +64,7 @@
     "UseShorthandTypeNames" : true,
     "UseSingleLinePropertyGetter" : true,
     "UseSynthesizedInitializer" : true,
-    "UseTripleSlashForDocumentationComments" : true,
+    "UseTripleSlashForDocumentationComments" : false,
     "UseWhereClausesInForLoops" : false,
     "ValidateDocumentationComments" : false
   },
