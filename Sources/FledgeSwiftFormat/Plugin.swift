@@ -213,7 +213,8 @@ public struct Plugin {
               --strict           Treat all findings as errors
               --use-project-config  Use the project's own .swift-format file
               -h, --help         Show this help message
-            """)
+            """
+        )
     }
 }
 
@@ -222,6 +223,10 @@ public struct Plugin {
 extension Plugin {
     internal func parseArgumentsForTesting(_ arguments: [String]) throws -> Command {
         try parseArguments(arguments)
+    }
+
+    internal static var bundledConfigPath: String? {
+        Bundle.module.url(forResource: ".swift-format", withExtension: "json")?.path
     }
 }
 

@@ -34,7 +34,8 @@ public struct ProtocolHandler {
                 message: "Discovering Swift files",
                 current: 1,
                 total: 3
-            ))
+            )
+        )
 
         do {
             let command = try parseProtocolArguments(args)
@@ -45,7 +46,8 @@ public struct ProtocolHandler {
                     message: "Running swift-format",
                     current: 2,
                     total: 3
-                ))
+                )
+            )
 
             try await plugin.execute(command: command, projectRoot: projectRoot)
 
@@ -55,7 +57,8 @@ public struct ProtocolHandler {
                     message: "Done",
                     current: 3,
                     total: 3
-                ))
+                )
+            )
             send(message: ProtocolMessage(type: "progress", done: true))
 
             send(
@@ -64,24 +67,28 @@ public struct ProtocolHandler {
                     text: command.mode == .format
                         ? "Swift files formatted successfully.\n"
                         : "Swift files linted successfully.\n"
-                ))
+                )
+            )
         } catch {
             send(
                 message: ProtocolMessage(
                     type: "progress",
                     done: true
-                ))
+                )
+            )
             send(
                 message: ProtocolMessage(
                     type: "log",
                     message: error.localizedDescription,
                     level: "error"
-                ))
+                )
+            )
             send(
                 message: ProtocolMessage(
                     type: "output",
                     text: "Error: \(error.localizedDescription)\n"
-                ))
+                )
+            )
             exit(1)
         }
     }
