@@ -410,6 +410,40 @@ internal struct BundledConfigLintTests {
         try await assertLintFinding(input: input, contains: "AvoidRetroactiveConformances")
     }
 
+    @Test("Overloads ambiguous when called with a trailing closure are reported")
+    internal func ambiguousTrailingClosureReported() async throws {
+        let input = """
+            public struct Foo {
+                public func run(_ block: () -> Void) {}
+                public func run(_ block: () -> Int) {}
+            }
+            """
+        try await assertLintFinding(input: input, contains: "AmbiguousTrailingClosureOverload")
+    }
+
+    @Test("Playground literals are reported")
+    internal func playgroundLiteralReported() async throws {
+        let input = """
+            import UIKit
+            public let c = #colorLiteral(red: 1, green: 0, blue: 0, alpha: 1)
+            """
+        try await assertLintFinding(input: input, contains: "NoPlaygroundLiterals")
+    }
+
+    @Test("Redundant labels in case patterns are reported")
+    internal func labelsInCasePatternsReported() async throws {
+        let input = """
+            public enum Shape { case point(x: Int, y: Int) }
+            public func describe(_ s: Shape) -> String {
+                switch s {
+                case .point(x: let x, y: let y):
+                    return "\\(x),\\(y)"
+                }
+            }
+            """
+        try await assertLintFinding(input: input, contains: "NoLabelsInCasePatterns")
+    }
+
     // MARK: - Negative cases for disabled rules
 
     @Test("Leading underscore identifier does NOT trigger NoLeadingUnderscores")
@@ -459,6 +493,35 @@ internal struct BundledConfigLintTests {
             }
             """
         try await assertNoLintFinding(input: input, for: "UseWhereClausesInForLoops")
+    }
+
+    @Test("Undocumented public declarations do NOT trigger AllPublicDeclarationsHaveDocumentation")
+    internal func undocumentedPublicAllowed() async throws {
+        let input = """
+            public func undocumented() {}
+            public struct Bare { public let x: Int }
+            """
+        try await assertNoLintFinding(input: input, for: "AllPublicDeclarationsHaveDocumentation")
+    }
+
+    @Test("Mismatched parameter docs do NOT trigger ValidateDocumentationComments")
+    internal func mismatchedParamDocAllowed() async throws {
+        let input = """
+            /// Brief.
+            /// - Parameter wrong: doesn't exist on the function.
+            /// - Returns: nothing.
+            public func go(actual: Int) {}
+            """
+        try await assertNoLintFinding(input: input, for: "ValidateDocumentationComments")
+    }
+
+    @Test("Multi-sentence first line of doc comment does NOT trigger BeginDocumentationCommentWithOneLineSummary")
+    internal func multiSentenceDocAllowed() async throws {
+        let input = """
+            /// This is a doc comment that is a single very long sentence and does not have a summary period.
+            public func go() {}
+            """
+        try await assertNoLintFinding(input: input, for: "BeginDocumentationCommentWithOneLineSummary")
     }
 
     // MARK: - Negative cases
